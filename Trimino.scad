@@ -9,14 +9,23 @@ trimo_height = 8;
 trimo_side = 40;
 trimo_corner_radius = 2;
 
+/* [Numbers] */
 trimo_text_font = "Ariel";
 trimo_text_size = 8;
 trimo_text_relief = 0.5;
 trimo_text_offset_factor = -0.4;
+text_color = "red";
 
-trimo_padding_x = -16; // bem pertos
-trimo_padding_y = 0;
+/* [Center] */
+center_enabled = true; // liga/desliga
+center_diameter = 5; //[1:8]
+center_mode = "spherical_boss"; // [none:Nenhum, spherical_boss:Spherical Boss, spherical_cavity:Sphere cavity, cavity:Rebaixo cilíndrico]
 
+/* [Paddings] */
+trimo_padding_x = 2; // bem pertos
+trimo_padding_y = 2;
+
+/* [Rows and columns] */
 trimo_printing_x = 9; // 9 por linha, cabe na Bambu A1
 trimo_printing_y = 6; // Número de linhas
 
@@ -189,20 +198,28 @@ module base_trimo() {
     rounded_triangle();
 }
 
-module base_trimo_with_center(center_diameter = 4) {
-  //  ressalto central esférico 
-  union() {
-    base_trimo();
-    translate([0, 0, trimo_height - center_diameter / 2 + trimo_text_relief])
-      sphere(r=center_diameter / 2, $fn=40);
+module base_trimo_with_center() {
+  if (center_enabled) {
+    if (center_mode == "spherical_cavity") {
+      difference() {
+        base_trimo();
+        translate([0, 0, trimo_height + center_diameter / 2 - trimo_text_relief])
+          sphere(r=center_diameter / 2, $fn=40);
+      }
+    } else if (center_mode == "spherical_boss") {
+      base_trimo();
+      translate([0, 0, trimo_height - center_diameter / 2 + trimo_text_relief])
+        sphere(r=center_diameter / 2, $fn=40);
+    } else if (center_mode == "cavity") {
+      difference() {
+        base_trimo();
+        translate([0, 0, trimo_height - 2])
+          cylinder(h=trimo_height, r=center_diameter / 2, $fn=40);
+      }
+    }
+  } else {
+        base_trimo();
   }
-
-  // rebaixo central cilindrico
-  //   difference() {
-  //     base_trimo();
-  //     translate([0, 0, trimo_height - 2])
-  //       cylinder(h=trimo_height, r=center_diameter / 2, $fn=32);
-  //   }
 }
 
 module numbered_trimo(numbers) {
@@ -211,8 +228,9 @@ module numbered_trimo(numbers) {
     for (i = [0:2]) {
       rotate([0, 0, 120 * i - 60])
         translate([0, trimo_side * trimo_text_offset_factor, 0])
-          linear_extrude(trimo_text_relief)
-            text(str(numbers[i]), font=trimo_text_font, size=trimo_text_size, halign="center");
+          color(text_color)
+            linear_extrude(trimo_text_relief)
+              text(str(numbers[i]), font=trimo_text_font, size=trimo_text_size, halign="center");
     }
   }
 }
