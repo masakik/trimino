@@ -134,7 +134,7 @@ module trimos_inline_x(n, flip = 0) {
   color(text_color);
   for (i = [0:n - 1]) {
     tx = i * trimo_side * 0.5 + base_x;
-    ty = ( (i + flip) % 2) * 0.2886 * trimo_side + base_y;
+    ty = ((i + flip) % 2) * 0.2886 * trimo_side + base_y;
     translate([tx, ty, 0])
       rotate([0, 0, 180 * ( (i + flip) % 2)]) // alterna 0° / 180°
         translate([0, 0, -0.01]) // evita z-fighting
@@ -143,12 +143,12 @@ module trimos_inline_x(n, flip = 0) {
 }
 
 module caixa() {
-  side = 5 * trimo_side*1.02;
-  corner_radius = 0.577 * trimo_side*1.02;
+  side = 5 * trimo_side * 1.02;
+  corner_radius = 0.577 * trimo_side * 1.02;
   height = 9;
   border = 5;
   difference() {
-    trimo(side +border, corner_radius, height);
+    trimo(side + border, corner_radius, height);
     trimos_inline_x(7, 1);
   }
 }
