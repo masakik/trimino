@@ -3,13 +3,14 @@
 // License: Creative Commons CC-BY-SA-4.0
 // ...
 
-selected_index = 0; // [0:Base 1-5, 1:Base with 0, 2:Set with 6, 3:Reverse set, 4:Teste]
+selected_index = 0; // [0:Base 1-5, 1:Base with 0, 2:Set with 6, 3:Reverse set, 4:Teste, 5:Caixa]
 
+trimo_side = 45;
 trimo_height = 8;
-trimo_side = 40;
-trimo_corner_radius = 2;
+trimo_corner_radius = 5;
 
 /* [Numbers] */
+number_enabled = true; // liga/desliga
 trimo_text_font = "Ariel";
 trimo_text_size = 8;
 trimo_text_relief = 0.5;
@@ -29,140 +30,7 @@ trimo_padding_y = 2;
 trimo_printing_x = 9; // 9 por linha, cabe na Bambu A1
 trimo_printing_y = 6; // Número de linhas
 
-// Oh, how I wish OpenSCAD had Python's generators.
-trimos_base_1_5 = [
-  [5, 5, 5],
-  [5, 5, 4],
-  [5, 5, 3],
-  [5, 5, 2],
-  [5, 5, 1],
-  [5, 4, 4],
-  [5, 4, 3],
-  [5, 4, 2],
-  [5, 4, 1],
-  [5, 3, 3],
-  [5, 3, 2],
-  [5, 3, 1],
-  [5, 2, 2],
-  [5, 2, 1],
-  [5, 1, 1],
-  [4, 4, 4],
-  [4, 4, 3],
-  [4, 4, 2],
-  [4, 4, 1],
-  [4, 3, 3],
-  [4, 3, 2],
-  [4, 3, 1],
-  [4, 2, 2],
-  [4, 2, 1],
-  [4, 1, 1],
-  [3, 3, 3],
-  [3, 3, 2],
-  [3, 3, 1],
-  [3, 2, 2],
-  [3, 2, 1],
-  [3, 1, 1],
-  [2, 2, 2],
-  [2, 2, 1],
-  [2, 1, 1],
-  [1, 1, 1],
-];
-
-trimos_base_with_0 = [
-  [5, 5, 0],
-  [5, 4, 0],
-  [5, 3, 0],
-  [5, 2, 0],
-  [5, 1, 0],
-  [5, 0, 0],
-  [4, 4, 0],
-  [4, 3, 0],
-  [4, 2, 0],
-  [4, 1, 0],
-  [4, 0, 0],
-  [3, 3, 0],
-  [3, 2, 0],
-  [3, 1, 0],
-  [3, 0, 0],
-  [2, 2, 0],
-  [2, 1, 0],
-  [2, 0, 0],
-  [1, 1, 0],
-  [1, 0, 0],
-  [0, 0, 0],
-];
-
-trimos_set_with_6 = [
-  [6, 6, 6],
-  [6, 6, 5],
-  [6, 6, 4],
-  [6, 6, 3],
-  [6, 6, 2],
-  [6, 6, 1],
-  [6, 6, 0],
-  [6, 0, 0],
-  [6, 5, 5],
-  [6, 5, 4],
-  [6, 5, 3],
-  [6, 5, 2],
-  [6, 5, 1],
-  [6, 5, 0],
-  [6, 4, 4],
-  [6, 4, 3],
-  [6, 4, 2],
-  [6, 4, 1],
-  [6, 4, 0],
-  [6, 3, 3],
-  [6, 3, 2],
-  [6, 3, 1],
-  [6, 3, 0],
-  [6, 2, 2],
-  [6, 2, 1],
-  [6, 2, 0],
-  [6, 1, 1],
-  [6, 1, 0],
-];
-
-trimos_set_reverse = [
-  [6, 4, 5],
-  [6, 3, 5],
-  [6, 3, 4],
-  [6, 2, 5],
-  [6, 2, 4],
-  [6, 2, 3],
-  [6, 1, 5],
-  [6, 1, 4],
-  [6, 1, 3],
-  [6, 1, 2],
-  [6, 0, 5],
-  [6, 0, 4],
-  [6, 0, 3],
-  [6, 0, 2],
-  [6, 0, 1],
-  [5, 3, 4],
-  [5, 2, 4],
-  [5, 2, 3],
-  [5, 1, 4],
-  [5, 1, 3],
-  [5, 1, 2],
-  [5, 0, 4],
-  [5, 0, 3],
-  [5, 0, 2],
-  [5, 0, 1],
-  [4, 2, 3],
-  [4, 1, 3],
-  [4, 0, 3],
-  [4, 0, 2],
-  [4, 0, 1],
-  [3, 1, 2],
-  [3, 0, 2],
-  [3, 0, 1],
-  [2, 0, 1],
-];
-
-trimos_teste = [
-  [1, 2, 3],
-];
+include <pecas.scad>;
 
 all_sets = [
   trimos_base_1_5,
@@ -170,67 +38,77 @@ all_sets = [
   trimos_set_with_6,
   trimos_set_reverse,
   trimos_teste,
+  caixa,
 ];
 
-module centered_equilateral_triangle() {
-  polygon(
-    [
-      [-0.5, -0.5 * tan(30)],
-      [.5, -0.5 * tan(30)],
-      [0, 0.5 * (tan(60) - tan(30))],
-    ]
-  );
-}
+//caixa: side 235, raduis 29
 
-module triangle_scaled() {
-  scale(trimo_side)
-    centered_equilateral_triangle();
-}
+module trimo(side, corner_radius, height) {
 
-module rounded_triangle() {
-  offset(r=trimo_corner_radius, $fn=40)
-    offset(delta=-trimo_corner_radius)
-      triangle_scaled();
-}
+  // triângulo equilátero centrado
+  module centered_equilateral_triangle() {
+    polygon(
+      [
+        [-0.5, -0.5 * tan(30)],
+        [0.5, -0.5 * tan(30)],
+        [0, 0.5 * (tan(60) - tan(30))],
+      ]
+    );
+  }
 
-module base_trimo() {
-  linear_extrude(trimo_height)
-    rounded_triangle();
+  // escala baseada em trimo_side
+  module triangle_scaled() {
+    scale(side)
+      centered_equilateral_triangle();
+  }
+
+  // cantos arredondados usando offset
+  module triangle_scaled_rounded() {
+    offset(r=corner_radius, $fn=80)
+      offset(delta=-corner_radius)
+        triangle_scaled();
+  }
+
+  // extrusão final
+  linear_extrude(height)
+    triangle_scaled_rounded();
 }
 
 module base_trimo_with_center() {
   if (center_enabled) {
     if (center_mode == "spherical_cavity") {
       difference() {
-        base_trimo();
+        trimo(trimo_side, trimo_corner_radius, trimo_height);
         translate([0, 0, trimo_height + center_diameter / 2 - trimo_text_relief])
-          sphere(r=center_diameter / 2, $fn=40);
+          sphere(r=center_diameter / 2, $fn=80);
       }
     } else if (center_mode == "spherical_boss") {
-      base_trimo();
+      trimo(trimo_side, trimo_corner_radius, trimo_height);
       translate([0, 0, trimo_height - center_diameter / 2 + trimo_text_relief])
-        sphere(r=center_diameter / 2, $fn=40);
+        sphere(r=center_diameter / 2, $fn=80);
     } else if (center_mode == "cavity") {
       difference() {
-        base_trimo();
+        trimo(trimo_side, trimo_corner_radius, trimo_height);
         translate([0, 0, trimo_height - 2])
-          cylinder(h=trimo_height, r=center_diameter / 2, $fn=40);
+          cylinder(h=trimo_height, r=center_diameter / 2, $fn=80);
       }
     }
   } else {
-        base_trimo();
+    trimo(trimo_side, trimo_corner_radius, trimo_height);
   }
 }
 
 module numbered_trimo(numbers) {
   base_trimo_with_center();
-  translate([0, 0, trimo_height]) {
-    for (i = [0:2]) {
-      rotate([0, 0, 120 * i - 60])
-        translate([0, trimo_side * trimo_text_offset_factor, 0])
-          color(text_color)
-            linear_extrude(trimo_text_relief)
-              text(str(numbers[i]), font=trimo_text_font, size=trimo_text_size, halign="center");
+  if (number_enabled) {
+    translate([0, 0, trimo_height]) {
+      for (i = [0:2]) {
+        rotate([0, 0, 120 * i - 60])
+          translate([0, trimo_side * trimo_text_offset_factor, 0])
+            color(text_color)
+              linear_extrude(trimo_text_relief)
+                text(str(numbers[i]), font=trimo_text_font, size=trimo_text_size, halign="center");
+      }
     }
   }
 }
@@ -250,4 +128,32 @@ module set_of_trimos(trimos) {
   }
 }
 
-set_of_trimos(all_sets[selected_index]);
+module trimos_inline_x(n, flip = 0) {
+  base_x = -(n - 1) * trimo_side * 0.25;
+  base_y = -1.333 * trimo_side * 0.86625;
+  color(text_color)for (i = [0:n - 1]) {
+    tx = i * trimo_side * 0.5 + base_x;
+    ty = ( (i + flip) % 2) * 0.2886 * trimo_side + base_y;
+    translate([tx, ty, 0])
+      rotate([0, 0, 180 * ( (i + flip) % 2)]) // alterna 0° / 180°
+        translate([0, 0, -0.01]) // evita z-fighting
+          trimo(trimo_side, 0, 10);
+  }
+}
+
+module caixa() {
+  side = 5 * trimo_side*1.02;
+  corner_radius = 0.577 * trimo_side*1.02;
+  height = 9;
+  border = 5;
+  difference() {
+    trimo(side +border, corner_radius, height);
+    trimos_inline_x(7, 1);
+  }
+}
+
+if (selected_index == 5) {
+  caixa();
+} else {
+  set_of_trimos(all_sets[selected_index]);
+}
