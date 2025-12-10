@@ -131,7 +131,8 @@ module set_of_trimos(trimos) {
 module trimos_inline_x(n, flip = 0) {
   base_x = -(n - 1) * trimo_side * 0.25;
   base_y = -1.333 * trimo_side * 0.86625;
-  color(text_color)for (i = [0:n - 1]) {
+  color(text_color);
+  for (i = [0:n - 1]) {
     tx = i * trimo_side * 0.5 + base_x;
     ty = ( (i + flip) % 2) * 0.2886 * trimo_side + base_y;
     translate([tx, ty, 0])
