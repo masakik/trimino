@@ -129,15 +129,16 @@ module set_of_trimos(trimos) {
 }
 
 module trimo_row(n, flip, base_x, base_y) {
+  trimo_scale = 1.0; // aumento 1% de folga entre peças
   for (i = [0:n]) {
 
-    tx = i * trimo_side * 0.5 + base_x;
-    ty = ( (i + flip) % 2) * 0.2886 * trimo_side + base_y;
+    tx = i * trimo_side * trimo_scale * 0.5 + base_x;
+    ty = ( (i + flip) % 2) * 0.2886 * trimo_side * trimo_scale + base_y;
 
     translate([tx, ty, 0])
       rotate([0, 0, 180 * ( (i + flip) % 2)])
         translate([0, 0, -0.01])
-          trimo(trimo_side * 1.05, 0, 10);
+          trimo(trimo_side * trimo_scale, 0, height);
   }
 }
 
@@ -160,19 +161,21 @@ module trimos_inline_x() {
     base_x = -(n) * trimo_side * 0.25;
     base_y = -1.333 * trimo_side * 0.86625 + ymul * (trimo_side - 6.05);
 
-    trimo_row(
-      n=n,
-      flip=flip,
-      base_x=base_x,
-      base_y=base_y
-    );
+    union() {
+      trimo_row(
+        n=n,
+        flip=flip,
+        base_x=base_x,
+        base_y=base_y
+      );
+    }
   }
 }
 
 module caixa() {
   side = 5 * trimo_side * 1.02;
-  corner_radius = 0.577 * trimo_side * 1.02;
-  height = 9;
+  corner_radius = 0.6 * trimo_side;
+  height = 50;
   border = 5;
   difference() {
     trimo(side + border, corner_radius, height);
