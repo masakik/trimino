@@ -128,17 +128,44 @@ module set_of_trimos(trimos) {
   }
 }
 
-module trimos_inline_x(n, flip = 0) {
-  base_x = -(n - 1) * trimo_side * 0.25;
-  base_y = -1.333 * trimo_side * 0.86625;
-  color(text_color);
-  for (i = [0:n - 1]) {
+module trimo_row(n, flip, base_x, base_y) {
+  for (i = [0:n]) {
+
     tx = i * trimo_side * 0.5 + base_x;
-    ty = ((i + flip) % 2) * 0.2886 * trimo_side + base_y;
+    ty = ( (i + flip) % 2) * 0.2886 * trimo_side + base_y;
+
     translate([tx, ty, 0])
-      rotate([0, 0, 180 * ( (i + flip) % 2)]) // alterna 0° / 180°
-        translate([0, 0, -0.01]) // evita z-fighting
-          trimo(trimo_side, 0, 10);
+      rotate([0, 0, 180 * ( (i + flip) % 2)])
+        translate([0, 0, -0.01])
+          trimo(trimo_side * 1.05, 0, 10);
+  }
+}
+
+module trimos_inline_x() {
+  // ---- Definição das linhas ----
+  // Cada linha: [n, flip, y_multiplier]
+  lines = [
+    [6, 1, 0],
+    [6, 0, 1],
+    [4, 0, 2],
+    [2, 0, 3],
+  ];
+
+  // ---- Renderização automática ----
+  for (row = lines) {
+    n = row[0];
+    flip = row[1];
+    ymul = row[2];
+
+    base_x = -(n) * trimo_side * 0.25;
+    base_y = -1.333 * trimo_side * 0.86625 + ymul * (trimo_side - 6.05);
+
+    trimo_row(
+      n=n,
+      flip=flip,
+      base_x=base_x,
+      base_y=base_y
+    );
   }
 }
 
@@ -149,7 +176,7 @@ module caixa() {
   border = 5;
   difference() {
     trimo(side + border, corner_radius, height);
-    trimos_inline_x(7, 1);
+    trimos_inline_x();
   }
 }
 
