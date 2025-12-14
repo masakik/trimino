@@ -6,7 +6,7 @@
 selected_index = 0; // [0:Base 1-5, 1:Base with 0, 2:Set with 6, 3:Reverse set, 4:Teste, 5:Caixa]
 
 trimo_side = 45;
-trimo_height = 8;
+trimo_height = 8; // [5:0.5:12]
 trimo_corner_radius = 5;
 
 /* [Numbers] */
@@ -14,13 +14,17 @@ number_enabled = true; // liga/desliga
 trimo_text_font = "Ariel";
 trimo_text_size = 8;
 trimo_text_relief = 0.5;
-trimo_text_offset_factor = -0.4;
+trimo_text_offset_factor = -0.40; // [-0.2:0.05:0.6]
 text_color = "red";
 
 /* [Center] */
 center_enabled = true; // liga/desliga
-center_diameter = 5; //[1:8]
-center_mode = "spherical_boss"; // [none:Nenhum, spherical_boss:Spherical Boss, spherical_cavity:Sphere cavity, cavity:Rebaixo cilíndrico]
+center_diameter = 5; // [1:8]
+center_mode = "spherical_boss"; // [spherical_boss:Spherical Boss, spherical_cavity:Sphere cavity, cavity:Rebaixo cilíndrico]
+
+/* [Border] */
+border_enabled = true; // liga/desliga
+border_thickness = 1.0; // [0.4:0.2:2.0]
 
 /* [Paddings] */
 trimo_padding_x = 2; // bem pertos
@@ -41,40 +45,38 @@ all_sets = [
   caixa,
 ];
 
-//caixa: side 235, raduis 29
-
-module trimo(side, corner_radius, height) {
-
-  // triângulo equilátero centrado
-  module centered_equilateral_triangle() {
-    polygon(
-      [
-        [-0.5, -0.5 * tan(30)],
-        [0.5, -0.5 * tan(30)],
-        [0, 0.5 * (tan(60) - tan(30))],
-      ]
-    );
-  }
-
-  // escala baseada em trimo_side
-  module triangle_scaled() {
-    scale(side)
-      centered_equilateral_triangle();
-  }
-
-  // cantos arredondados usando offset
-  module triangle_scaled_rounded() {
-    offset(r=corner_radius, $fn=80)
-      offset(delta=-corner_radius)
-        triangle_scaled();
-  }
-
-  // extrusão final
-  linear_extrude(height)
-    triangle_scaled_rounded();
+// cantos arredondados usando offset
+module triangle_scaled_rounded(side, corner_radius) {
+  offset(r=corner_radius, $fn=80)
+    offset(delta=-corner_radius)
+      scale(side)
+        polygon(
+          [
+            [-0.5, -0.5 * tan(30)],
+            [0.5, -0.5 * tan(30)],
+            [0, 0.5 * (tan(60) - tan(30))],
+          ]
+        );
 }
 
-module base_trimo_with_center() {
+module trimo(side, corner_radius, height) {
+  linear_extrude(height)
+    triangle_scaled_rounded(side, corner_radius);
+}
+
+module trimo_border(side, corner_radius) {
+  translate([0, 0, trimo_height - 0.001]) {
+    color(text_color)
+      linear_extrude(trimo_text_relief + 0.001)
+        difference() {
+          triangle_scaled_rounded(side, corner_radius);
+          offset(delta=-border_thickness)
+            triangle_scaled_rounded(side, corner_radius);
+        }
+  }
+}
+
+module trimo_with_center() {
   if (center_enabled) {
     if (center_mode == "spherical_cavity") {
       difference() {
@@ -98,8 +100,22 @@ module base_trimo_with_center() {
   }
 }
 
-module numbered_trimo(numbers) {
-  base_trimo_with_center();
+module trimo_with_border() {
+  trimo_with_center();
+  if (border_enabled) {
+    translate([0, 0, trimo_height - 0.001]) {
+      linear_extrude(trimo_text_relief + 0.001)
+        difference() {
+          triangle_scaled_rounded(trimo_side, trimo_corner_radius);
+          offset(delta=-border_thickness)
+            triangle_scaled_rounded(trimo_side, trimo_corner_radius);
+        }
+    }
+  }
+}
+
+module trimo_with_number(numbers) {
+  trimo_with_border();
   if (number_enabled) {
     translate([0, 0, trimo_height]) {
       for (i = [0:2]) {
@@ -122,13 +138,13 @@ module set_of_trimos(trimos) {
         ty = y * (trimo_side * 0.866 + trimo_padding_y) + (x % 2) * 0.289 * trimo_side;
         translate([tx, ty, 0])
           rotate([0, 0, 180 * (x % 2)])
-            numbered_trimo(trimos[trimo_index]);
+            trimo_with_number(trimos[trimo_index]);
       }
     }
   }
 }
 
-module trimo_row(n, flip, base_x, base_y) {
+module trimo_row(n, flip, base_x, base_y, height) {
   trimo_scale = 1.0; // aumento 1% de folga entre peças
   for (i = [0:n]) {
 
@@ -138,11 +154,11 @@ module trimo_row(n, flip, base_x, base_y) {
     translate([tx, ty, 0])
       rotate([0, 0, 180 * ( (i + flip) % 2)])
         translate([0, 0, -0.01])
-          trimo(trimo_side * trimo_scale, 0, height);
+          trimo(trimo_side * trimo_scale, 0, height * 1.01);
   }
 }
 
-module trimos_inline_x() {
+module trimos_inline_x(height) {
   // ---- Definição das linhas ----
   // Cada linha: [n, flip, y_multiplier]
   lines = [
@@ -158,28 +174,36 @@ module trimos_inline_x() {
     flip = row[1];
     ymul = row[2];
 
+    trimo_height = trimo_side * 0.8660254;
+    first_offset = 1.33 * trimo_height;
+
     base_x = -(n) * trimo_side * 0.25;
-    base_y = -1.333 * trimo_side * 0.86625 + ymul * (trimo_side - 6.05);
+    base_y = trimo_height * ymul * 0.9998 - first_offset;
 
     union() {
       trimo_row(
         n=n,
         flip=flip,
         base_x=base_x,
-        base_y=base_y
+        base_y=base_y,
+        height=height
       );
     }
   }
 }
 
 module caixa() {
-  side = 5 * trimo_side * 1.02;
-  corner_radius = 0.6 * trimo_side;
-  height = 50;
-  border = 5;
+  box_side = 5 * trimo_side * 1.02;
+  corner_radius = 0.65 * trimo_side;
+  // 5 camadas cheias + 8 peças de altura
+  box_height_relief = 4; // espaço extra para facilitar a remoção
+  box_border = 4;
+  box_height = 6 * (trimo_height + trimo_text_relief) + box_border + box_height_relief;
+
   difference() {
-    trimo(side + border, corner_radius, height);
-    trimos_inline_x();
+    trimo(box_side + box_border, corner_radius, box_height);
+    translate([0, 0, box_border]) // fundo da caixa
+      trimos_inline_x(box_height);
   }
 }
 
