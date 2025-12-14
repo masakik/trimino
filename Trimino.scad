@@ -3,18 +3,18 @@
 // License: Creative Commons CC-BY-SA-4.0
 // ...
 
-selected_index = 0; // [0:Base 1-5, 1:Base with 0, 2:Set with 6, 3:Reverse set, 4:Teste, 5:Caixa]
+set = 0; // [0:Base 1-5, 1:Base with 0, 2:Set with 6, 3:Reverse set, 4:Teste, 5:Caixa]
 
 trimo_side = 45;
 trimo_height = 8; // [5:0.5:12]
-trimo_corner_radius = 5;
+trimo_corner_radius = 4;
 
 /* [Numbers] */
 number_enabled = true; // liga/desliga
-trimo_text_font = "Ariel";
-trimo_text_size = 8;
-trimo_text_relief = 0.5;
-trimo_text_offset_factor = -0.40; // [-0.2:0.05:0.6]
+trimo_text_font = "Liberation Sans";
+trimo_text_size = 10;
+trimo_text_relief = 0.6; // [0.2:0.2:1.0]
+trimo_text_offset_factor = -0.35; // [-0.40:0.025:-0.25]
 text_color = "red";
 
 /* [Center] */
@@ -24,15 +24,18 @@ center_mode = "spherical_boss"; // [spherical_boss:Spherical Boss, spherical_cav
 
 /* [Border] */
 border_enabled = true; // liga/desliga
-border_thickness = 1.0; // [0.4:0.2:2.0]
+border_thickness = 1.2; // [0.4:0.4:2.0]
 
-/* [Paddings] */
+/* [Paddings entre peças] */
 trimo_padding_x = 2; // bem pertos
 trimo_padding_y = 2;
 
 /* [Rows and columns] */
 trimo_printing_x = 9; // 9 por linha, cabe na Bambu A1
 trimo_printing_y = 6; // Número de linhas
+
+/* [Box] */
+box_border = 4; // espessura da borda da caixa
 
 include <pecas.scad>;
 
@@ -144,13 +147,11 @@ module set_of_trimos(trimos) {
   }
 }
 
-module trimo_row(n, flip, base_x, base_y, height) {
+module box_inside_trimos(n, flip, base_x, base_y, height) {
   trimo_scale = 1.0; // aumento 1% de folga entre peças
   for (i = [0:n]) {
-
     tx = i * trimo_side * trimo_scale * 0.5 + base_x;
     ty = ( (i + flip) % 2) * 0.2886 * trimo_side * trimo_scale + base_y;
-
     translate([tx, ty, 0])
       rotate([0, 0, 180 * ( (i + flip) % 2)])
         translate([0, 0, -0.01])
@@ -158,8 +159,7 @@ module trimo_row(n, flip, base_x, base_y, height) {
   }
 }
 
-module trimos_inline_x(height) {
-  // ---- Definição das linhas ----
+module box_inside(height) {
   // Cada linha: [n, flip, y_multiplier]
   lines = [
     [6, 1, 0],
@@ -168,27 +168,17 @@ module trimos_inline_x(height) {
     [2, 0, 3],
   ];
 
-  // ---- Renderização automática ----
   for (row = lines) {
     n = row[0];
     flip = row[1];
     ymul = row[2];
 
+    base_x = -(n) * trimo_side * 0.25;
     trimo_height = trimo_side * 0.8660254;
     first_offset = 1.33 * trimo_height;
-
-    base_x = -(n) * trimo_side * 0.25;
     base_y = trimo_height * ymul * 0.9998 - first_offset;
 
-    union() {
-      trimo_row(
-        n=n,
-        flip=flip,
-        base_x=base_x,
-        base_y=base_y,
-        height=height
-      );
-    }
+    box_inside_trimos(n, flip, base_x, base_y, height);
   }
 }
 
@@ -197,18 +187,18 @@ module caixa() {
   corner_radius = 0.65 * trimo_side;
   // 5 camadas cheias + 8 peças de altura
   box_height_relief = 4; // espaço extra para facilitar a remoção
-  box_border = 4;
+  // box_border = 4;
   box_height = 6 * (trimo_height + trimo_text_relief) + box_border + box_height_relief;
 
   difference() {
     trimo(box_side + box_border, corner_radius, box_height);
     translate([0, 0, box_border]) // fundo da caixa
-      trimos_inline_x(box_height);
+      box_inside(box_height);
   }
 }
 
-if (selected_index == 5) {
+if (set == 5) {
   caixa();
 } else {
-  set_of_trimos(all_sets[selected_index]);
+  set_of_trimos(all_sets[set]);
 }
