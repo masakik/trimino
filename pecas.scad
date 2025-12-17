@@ -131,6 +131,7 @@ trimos_set_reverse = [
 
 trimos_teste = [
   [1, 2, 3],
+  [4, 5, 6],
 ];
 
 caixa = [];
