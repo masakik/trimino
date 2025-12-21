@@ -194,9 +194,20 @@ module box(set) {
   //raio do limite de corte da tampa: na caixa corta para fora, na tampa corta para dentro
   cut_radius = (box_side + box_border) * 0.8225 * 0.5;
 
+  // altura do corte que a tampa vai entrar na caixa
+  cut_height = 20;
+
+  // altura do encaixe da tampa na caixa
+  locker_height = 4;
+
+  // folga da tampa
+  cover_clearance = 0.8;
+
+  // chanfro da base
+  chamfer_size = 2;
+
   // corte externo da caixa
   module outer_cut(box_side, box_border, box_height, cut_radius) {
-    cut_height = 20;
     // color("white", 0.5)
     translate([0, 0, box_height - cut_height + 0.01])
       linear_extrude(cut_height)
@@ -209,10 +220,9 @@ module box(set) {
   // corte interno da tampa
   module inner_cut(box_side, box_border, box_height, cut_radius) {
     // color("white", 0.5)
-    clearance = 0.8; // folga
     translate([0, 0, box_border])
       linear_extrude(box_height)
-        circle(cut_radius + clearance, $fn=120);
+        circle(cut_radius + cover_clearance, $fn=120);
   }
 
   module trimo_chamfer(side, corner_radius, chamfer) {
@@ -221,30 +231,54 @@ module box(set) {
         triangle_scaled_rounded(side - chamfer * 3, corner_radius - chamfer * 1.2);
   }
 
+  module poligon_torus(clearance) {
+    rotate_extrude($fn=120)
+      translate([cut_radius - 0.025, 0])
+        polygon(
+          [
+            [0, -locker_height * 1.5 - clearance],
+            [locker_height + clearance, -locker_height / 3],
+            [locker_height + clearance, locker_height / 3],
+            [0, locker_height * 1.5 + clearance],
+          ]
+        );
+  }
+
+  module locker(locker_offset, clearance = 0) {
+    // locker_offset: distância do chao da caixa até o centro do encaixe
+    // color("white", 0.5)
+    intersection() {
+      translate([0, 0, locker_offset])
+        poligon_torus(clearance);
+      trimo(box_side + box_border + 0.01, corner_radius, box_height);
+    }
+  }
+
   if (set == 6) {
     // cover
-    difference() {
-      cover_height = 20;
-      trimo(box_side + box_border, corner_radius, cover_height + box_border);
-      translate([0, 0, box_border + 0.01]) // fundo da caixa
-        box_inside(cover_height);
-      inner_cut(box_side, box_border, cover_height, cut_radius);
-    }
+    //color("yellow", 0.5)
+    translate([0, 0, chamfer_size - 0.01])
+      difference() {
+        trimo(box_side + box_border, corner_radius, cut_height + box_border - chamfer_size);
+        translate([0, 0, box_border - chamfer_size + 0.01]) // fundo da caixa
+          box_inside(cut_height - chamfer_size);
+        inner_cut(box_side, box_border - chamfer_size, cut_height, cut_radius);
+        locker(locker_offset=cut_height / 2 + box_border - chamfer_size, clearance=cover_clearance);
+      }
+    trimo_chamfer(box_side, corner_radius, chamfer_size);
   }
 
   if (set == 5) {
     // box
-    chamfer = 2;
-    translate([0, 0, chamfer - 0.01])
+    translate([0, 0, chamfer_size - 0.01])
       difference() {
-        trimo(box_side + box_border, corner_radius, box_height - chamfer);
-        translate([0, 0, box_border - chamfer]) // fundo da caixa
-          box_inside(box_height - chamfer);
-        outer_cut(box_side, box_border, box_height - chamfer, cut_radius); // encaixe da tampa
+        trimo(box_side + box_border, corner_radius, box_height - chamfer_size);
+        translate([0, 0, box_border - chamfer_size]) // fundo da caixa
+          box_inside(box_height - chamfer_size);
+        outer_cut(box_side, box_border, box_height - chamfer_size, cut_radius); // encaixe da tampa
       }
-
-    color("white", 1)
-      trimo_chamfer(box_side, corner_radius, chamfer=2);
+    trimo_chamfer(box_side, corner_radius, chamfer_size);
+    locker(locker_offset=box_height - cut_height / 2);
   }
 }
 
