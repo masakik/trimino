@@ -261,7 +261,7 @@ module box(set) {
     }
   }
 
-  module circular_sector(init_angle, offset) {
+  module circular_tri_sector(init_angle, offset) {
     radius = cut_radius + locker_height + 1;
     translate([0, 0, offset]) {
       for (rot = [0:2])
@@ -274,6 +274,40 @@ module box(set) {
               )
             );
     }
+  }
+
+  // para flecha
+
+  module circular_sector_arrow(radius, angle, fn = 120) {
+    polygon(
+      concat(
+        [[0, 0]],
+        [for (a = [0:angle / fn:angle]) [radius * cos(a), radius * sin(a)]]
+      )
+    );
+  }
+
+  module arc_thick(radius, angle, width) {
+    difference() {
+      circular_sector_arrow(radius + width, angle);
+      circular_sector_arrow(radius, angle);
+    }
+  }
+
+  module curved_arrow(width = 4) {
+    radius = cut_radius * 0.85;
+    angle = 20;
+    height = 0.4;
+    rotate(90 - angle / 2)
+      linear_extrude(height) {
+        // corpo curvo
+        arc_thick(radius, angle, width);
+        // ponta da seta
+        rotate(angle)
+          translate([radius + width / 2, 0])
+            rotate(90)
+              polygon([[0, -width], [width, 0], [0, width]]);
+      }
   }
 
   if (set == 5) {
@@ -289,7 +323,7 @@ module box(set) {
     difference() {
       locker(locker_offset=box_height - cover_insert / 2);
       init_angle = -(circular_sector_degree + 60 + locker_limit_angle);
-      circular_sector(init_angle, box_height - cover_insert);
+      circular_tri_sector(init_angle, box_height - cover_insert);
     }
   }
 
@@ -304,11 +338,18 @@ module box(set) {
         inner_cut(box_side, box_border - chamfer_size, cover_insert, cut_radius);
         difference() {
           locker(locker_offset=cover_insert / 2 + box_border - chamfer_size, clearance=cover_clearance);
-          circular_sector(locker_limit_angle, box_border - chamfer_size);
+          circular_tri_sector(locker_limit_angle, box_border - chamfer_size);
         }
       }
     }
     trimo_chamfer(box_side, corner_radius, chamfer_size);
+
+    translate([0, 0, box_border + 30]) {
+      rotate(a=0)
+        curved_arrow(
+          width=4,
+        );
+    }
   }
 }
 
