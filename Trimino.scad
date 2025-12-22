@@ -35,7 +35,11 @@ trimo_printing_x = 9; // 9 por linha, cabe na Bambu A1
 trimo_printing_y = 6; // Número de linhas
 
 /* [Box] */
+// Espessura da borda
 box_border = 4; // espessura da borda da caixa
+
+// Altura do corte que a tampa vai entrar na caixa
+cover_insert = 25;
 
 include <pecas.scad>;
 
@@ -194,13 +198,11 @@ module box(set) {
   //raio do limite de corte da tampa: na caixa corta para fora, na tampa corta para dentro
   cut_radius = (box_side + box_border) * 0.8225 * 0.5;
 
-  // altura do corte que a tampa vai entrar na caixa
-  cut_height = 20;
-
   // altura do encaixe da tampa na caixa
-  locker_height = 4;
+  locker_height = 0.085 * trimo_side;
 
-  locker_limit_angle = -22.5;
+  locker_limit_angle = -30;
+  circular_sector_degree = 40;
 
   // folga da tampa
   cover_clearance = 0.8;
@@ -211,10 +213,10 @@ module box(set) {
   // corte externo da caixa
   module outer_cut(box_side, box_border, box_height, cut_radius) {
     // color("white", 0.5)
-    translate([0, 0, box_height - cut_height + 0.01])
-      linear_extrude(cut_height)
+    translate([0, 0, box_height - cover_insert + 0.01])
+      linear_extrude(cover_insert)
         difference() {
-          circle(cut_radius + 4 * box_border, $fn=128);
+          circle(box_side, $fn=128);
           circle(cut_radius, $fn=128);
         }
   }
@@ -260,20 +262,17 @@ module box(set) {
   }
 
   module circular_sector(init_angle, offset) {
-    angle_degree = 10;
     radius = cut_radius + locker_height + 1;
     translate([0, 0, offset]) {
-    for (rot = [0:2])
-      rotate(init_angle + 120 * rot)
-        linear_extrude(cut_height + box_border)
-          polygon(
-            concat(
-              [[0, 0]],
-              [
-                for (a = [0:angle_degree]) [radius * cos(a), radius * sin(a)],
-              ]
-            )
-          );
+      for (rot = [0:2])
+        rotate(init_angle + 120 * rot)
+          linear_extrude(cover_insert + box_border)
+            polygon(
+              concat(
+                [[0, 0]],
+                [for (a = [0:circular_sector_degree]) [radius * cos(a), radius * sin(a)]]
+              )
+            );
     }
   }
 
@@ -288,8 +287,9 @@ module box(set) {
       }
     trimo_chamfer(box_side, corner_radius, chamfer_size);
     difference() {
-      locker(locker_offset=box_height - cut_height / 2);
-      #circular_sector(-25 + locker_limit_angle, box_height - cut_height);
+      locker(locker_offset=box_height - cover_insert / 2);
+      init_angle = -(circular_sector_degree + 60 + locker_limit_angle);
+      circular_sector(init_angle, box_height - cover_insert);
     }
   }
 
@@ -298,12 +298,12 @@ module box(set) {
     // color("yellow", 0.5)
     translate([0, 0, chamfer_size - 0.01]) {
       difference() {
-        trimo(box_side + box_border, corner_radius, cut_height + box_border - chamfer_size);
+        trimo(box_side + box_border, corner_radius, cover_insert + box_border - chamfer_size);
         translate([0, 0, box_border - chamfer_size + 0.01]) // fundo da caixa
-          box_inside(cut_height - chamfer_size);
-        inner_cut(box_side, box_border - chamfer_size, cut_height, cut_radius);
+          box_inside(cover_insert - chamfer_size);
+        inner_cut(box_side, box_border - chamfer_size, cover_insert, cut_radius);
         difference() {
-          locker(locker_offset=cut_height / 2 + box_border - chamfer_size, clearance=cover_clearance);
+          locker(locker_offset=cover_insert / 2 + box_border - chamfer_size, clearance=cover_clearance);
           circular_sector(locker_limit_angle, box_border - chamfer_size);
         }
       }
